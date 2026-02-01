@@ -19,7 +19,7 @@ Server: Uvicorn (ASGI server)<br>
 
 Installation<br>
 Clone the repository:<br>
-git clone https://github.com/yourusername/data-quality-validator.git<br>
+git clone https://github.com/PasinduJayasekara/Data-Quality-Validator.git<br>
 cd data-quality-validator<br>
 
 Create a virtual environment:<br>
