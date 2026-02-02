@@ -3,7 +3,7 @@ from backend.validator import validate_csv, load_csv, clean_data
 from fastapi.responses import StreamingResponse
 import io
 
-app = FastAPI(title="Data Quality Validator")
+app = FastAPI(title="Dataset Quality Validator")
 
 @app.post("/validate")
 async def validate(file: UploadFile = File(...)):

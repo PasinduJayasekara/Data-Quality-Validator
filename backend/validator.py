@@ -38,6 +38,7 @@ def check_duplicates(df):
     return int(df.duplicated().sum())
 
 # Outlier detection
+# An outlier is a value that is unusually far from the normal range
 def detect_outliers(df):
     outliers = {}
     numeric_cols = df.select_dtypes(include=["int64","float64"]).columns
@@ -55,6 +56,7 @@ def detect_outliers(df):
 
     return outliers
 
+# It is a summary of each column’s behavior.
 def data_profiling(df):
     profile = {}
 
