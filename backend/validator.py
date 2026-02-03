@@ -1,12 +1,14 @@
 import pandas as pd
 import numpy as np
 
+
 def to_python_type(value):
     if isinstance(value, (np.integer,)):
         return int(value)
     if isinstance(value, (np.floating,)):
         return float(value)
     return value
+
 
 def make_json_safe(obj):
     if isinstance(obj, dict):
@@ -20,28 +22,33 @@ def make_json_safe(obj):
     else:
         return obj
 
+
 # Read csv file
 def load_csv(filename):
     df = pd.read_csv(filename)
     return df
 
+
 # Check missing values
 def check_missing_values(df):
     return df.isnull().sum().to_dict()
+
 
 # Check data types
 def check_data_types(df):
     return df.dtypes.astype(str).to_dict()
 
+
 # Check duplicate rows
 def check_duplicates(df):
     return int(df.duplicated().sum())
+
 
 # Outlier detection
 # An outlier is a value that is unusually far from the normal range
 def detect_outliers(df):
     outliers = {}
-    numeric_cols = df.select_dtypes(include=["int64","float64"]).columns
+    numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
 
     for col in numeric_cols:
         mean = df[col].mean()
@@ -55,6 +62,7 @@ def detect_outliers(df):
         outliers[col] = int((z_scores > 3).sum())
 
     return outliers
+
 
 # It is a summary of each column’s behavior.
 def data_profiling(df):
@@ -79,6 +87,7 @@ def data_profiling(df):
 
     return profile
 
+
 def generate_suggestions(report):
     suggestions = []
 
@@ -93,13 +102,17 @@ def generate_suggestions(report):
 
     return suggestions
 
+
 EXPECTED_SCHEMA = {
     "id": "int64",
     "age": "int64",
     "salary": "float64"
 }
 
-def validate_schema(df):
+
+def validate_schema(df, expected_schema=None):
+    if not expected_schema:
+        return []
     issues = []
 
     for col, expected_type in EXPECTED_SCHEMA.items():
@@ -112,12 +125,14 @@ def validate_schema(df):
 
     return issues
 
+
 def calculate_quality_score(report):
     score = 100
     score -= sum(report["missing_values"].values())
     score -= report["duplicate_rows"] * 2
     score -= sum(report["outliers"].values())
     return int(max(score, 0))
+
 
 def clean_data(df):
     df = df.drop_duplicates()
@@ -147,7 +162,3 @@ def validate_csv(filename):
     report["suggestions"] = generate_suggestions(report)
 
     return make_json_safe(report)
-
-
-
-
