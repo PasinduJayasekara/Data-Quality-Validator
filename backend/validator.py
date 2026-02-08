@@ -25,27 +25,33 @@ def make_json_safe(obj):
 
 # Read csv file
 def load_csv(filename):
-    df = pd.read_csv(filename)
+    filename.seek(0)
+    df = pd.read_csv(filename, encoding="utf-8-sig")
     return df
 
 
-# Check missing values
+
+# Calculates the number of missing (null) values in each column
+# Used to identify incomplete data that may affect analysis or ML models
 def check_missing_values(df):
     return df.isnull().sum().to_dict()
 
 
-# Check data types
+# Detects the inferred data type of each column
+# Helps identify incorrect or inconsistent column types
 def check_data_types(df):
     return df.dtypes.astype(str).to_dict()
 
 
-# Check duplicate rows
+# Counts the number of duplicate rows in the dataset
+# Duplicate records can skew aggregations and analytics
 def check_duplicates(df):
     return int(df.duplicated().sum())
 
 
-# Outlier detection
-# An outlier is a value that is unusually far from the normal range
+# Detects outliers in numeric columns using Z-score method
+# An outlier is a value that is more than 3 standard deviations
+# away from the column mean, indicating a potential anomaly
 def detect_outliers(df):
     outliers = {}
     numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
@@ -54,17 +60,22 @@ def detect_outliers(df):
         mean = df[col].mean()
         std = df[col].std()
 
+        # If standard deviation is zero, all values are identical
         if std == 0:
             outliers[col] = 0
             continue
 
+        # Z-score calculation
         z_scores = ((df[col] - mean) / std).abs()
+
+        # Count values that exceed the threshold
         outliers[col] = int((z_scores > 3).sum())
 
     return outliers
 
 
-# It is a summary of each column’s behavior.
+# Generates column-level statistics to understand data distribution
+# Includes data type, missing percentage, uniqueness, and basic stats
 def data_profiling(df):
     profile = {}
 
@@ -77,6 +88,7 @@ def data_profiling(df):
             "unique_values": to_python_type(col_data.nunique())
         }
 
+        # Additional statistics for numeric columns
         if col_data.dtype in ["int64", "float64"]:
             profile[col].update({
                 "min": col_data.min(),
@@ -109,10 +121,11 @@ EXPECTED_SCHEMA = {
     "salary": "float64"
 }
 
-
+# Validates the dataset against an expected schema (if provided)
+# Ensures required columns exist and data types match expectations
 def validate_schema(df, expected_schema=None):
     if not expected_schema:
-        return []
+        return ["Schema validation skipped"]
     issues = []
 
     for col, expected_type in EXPECTED_SCHEMA.items():
@@ -126,6 +139,8 @@ def validate_schema(df, expected_schema=None):
     return issues
 
 
+# Calculates an overall data quality score based on detected issues
+# The score decreases as missing values, duplicates, and outliers increase
 def calculate_quality_score(report):
     score = 100
     score -= sum(report["missing_values"].values())
@@ -134,6 +149,8 @@ def calculate_quality_score(report):
     return int(max(score, 0))
 
 
+# Cleans the dataset by removing duplicates and filling missing numeric values
+# Median is used to reduce the impact of outliers
 def clean_data(df):
     df = df.drop_duplicates()
 

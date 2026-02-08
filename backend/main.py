@@ -5,18 +5,18 @@ import io
 
 app = FastAPI(title="Dataset Quality Validator")
 
+
 @app.post("/validate")
 async def validate(file: UploadFile = File(...)):
+    file.file.seek(0)
     report = validate_csv(file.file)
     return report
 
 
 @app.post("/clean")
 async def clean(file: UploadFile = File(...)):
-    # Load CSV file
+    file.file.seek(0)
     df = load_csv(file.file)
-
-    # Clean file
     cleaned_df = clean_data(df)
 
     stream = io.StringIO()

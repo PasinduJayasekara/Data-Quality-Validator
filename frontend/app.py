@@ -1,28 +1,46 @@
 import streamlit as st
 import requests
+import pandas as pd
 
-
-st.set_page_config(
-    page_title="Dataset Quality Validator",
-)
-
+st.set_page_config(page_title="Dataset Quality Validator")
 st.title("Dataset Quality Validator")
 
 uploaded_file = st.file_uploader("Upload CSV File", type="csv")
 
 if uploaded_file:
-    st.info("File uploaded successfully. Click **Check Dataset** to validate.")
+    st.info("File uploaded successfully.")
+
+    # ---- Read file ONCE ----
+    file_bytes = uploaded_file.getvalue()
+
+    # ---- Dataset Preview (BEFORE validation) ----
+    st.subheader("Dataset Preview")
+    try:
+        preview_df = pd.read_csv(
+            pd.io.common.BytesIO(file_bytes),
+            encoding="utf-8-sig",
+            thousands=",",
+            nrows=5
+        )
+        st.dataframe(preview_df, width="stretch")
+        st.caption("Showing first 5 rows of the dataset (including column names).")
+    except Exception as e:
+        st.error("Unable to preview CSV file.")
+        st.caption(str(e))
+
+    st.divider()
 
     if st.button("Check Dataset"):
         files = {
-            "file": (uploaded_file.name, uploaded_file, "text/csv")
+            "file": (uploaded_file.name, file_bytes, "text/csv")
         }
 
-        # Validate
+        # ---- Validate ----
         with st.spinner("Validating dataset..."):
             response = requests.post(
                 "http://localhost:8000/validate",
-                files=files
+                files=files,
+                timeout=60
             )
 
         if response.status_code == 200:
@@ -56,25 +74,21 @@ if uploaded_file:
             for s in report["suggestions"]:
                 st.write("- ", s)
 
-            # Download cleaned CSV file
-            st.subheader("Download Cleaned CSV")
-            # Reset the file pointer so backend can read it
-            uploaded_file.seek(0)
+            st.divider()
 
+            # ---- Download Cleaned CSV ----
+            st.subheader("Download Cleaned CSV")
             with st.spinner("Cleaning dataset..."):
                 clean_response = requests.post(
                     "http://localhost:8000/clean",
-                    files=files
+                    files=files,
+                    timeout=60
                 )
 
             if clean_response.status_code == 200:
-                original_name = uploaded_file.name
-                cleaned_filename = f"cleaned_{original_name}"
-
                 st.download_button(
                     label="Download Cleaned CSV",
                     data=clean_response.content,
-                    file_name=cleaned_filename,
+                    file_name=f"cleaned_{uploaded_file.name}",
                     mime="text/csv"
                 )
-
